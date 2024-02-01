@@ -1,6 +1,6 @@
 const services = require("../services");
 
-exports.extractDocxContext = async (req, res) => {
+exports.converter = async (req, res) => {
   try {
     const { file } = await req;
     const { buffer, error } = await services.converter({ file });
@@ -19,12 +19,15 @@ exports.extractDocxContext = async (req, res) => {
   }
 };
 
-// exports.extractPptxContext = async (req, res) => {
-//   try {
-//     const { name } = req.body;
-//     const newExample = await services.extractPptxContext(name);
-//     res.json(newExample);
-//   } catch (error) {
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
+exports.walker = async (req, res) => {
+  try {
+    const { url } = req.body;
+    // console.log({ url });
+    // console.log(req.body);
+
+    const newExample = await services.walker({ url });
+    res.json(newExample);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

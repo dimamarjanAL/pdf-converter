@@ -6,6 +6,7 @@ const upload = multer();
 
 const interceptFile = upload.single("file");
 
-router.post("/converter", interceptFile, controllers.extractDocxContext);
+router.post("/converter", interceptFile, controllers.converter);
+router.post("/walker", controllers.walker);
 
 module.exports = router;
