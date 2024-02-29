@@ -8,5 +8,7 @@ const interceptFile = upload.single("file");
 
 router.post("/converter", interceptFile, controllers.converter);
 router.post("/walker", controllers.walker);
+router.post("/files", controllers.listDriveFiles);
+router.post("/upload-files", controllers.downloadDriveFile);
 
 module.exports = router;

@@ -22,11 +22,33 @@ exports.converter = async (req, res) => {
 exports.walker = async (req, res) => {
   try {
     const { url } = req.body;
-    // console.log({ url });
-    // console.log(req.body);
-
     const newExample = await services.walker({ url });
     res.json(newExample);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.listDriveFiles = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const newExample = await services.listAllDriveFiles({ email });
+    res.json(newExample);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.downloadDriveFile = async (req, res) => {
+  try {
+    const { filesId } = req.body;
+    const buffer = await services.downloadDriveFileAndConvertToPdf({
+      filesId,
+    });
+
+    res.setHeader("Content-Disposition", "attachment; filename=file");
+    res.setHeader("Content-Type", "application/pdf");
+    res.send(buffer);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
