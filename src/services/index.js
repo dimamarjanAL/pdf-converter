@@ -7,6 +7,9 @@ const utils = require("../utils");
 const config = require("../config");
 const { googleDrive } = require("../utils");
 
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+
 exports.converter = async ({ file }) => {
   const buffer = file?.buffer;
   const extend = ".pdf";
@@ -29,8 +32,14 @@ exports.walker = async ({ url }) => {
     return { url: null, body: "", error: "The URL is missing" };
   }
   let browser;
+
   try {
-    browser = await puppeteer.launch({ headless: "new" });
+    browser = await puppeteer.launch({
+      headless: "new",
+      ...process.env.JE_CHROMIUM_PATH && {
+          executablePath: process.env.JE_CHROMIUM_PATH,
+      },
+    });
     const page = await browser.newPage();
     await page.setUserAgent(
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
