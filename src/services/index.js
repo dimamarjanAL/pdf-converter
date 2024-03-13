@@ -126,7 +126,7 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
           visitedPages.push(pageLink)
           console.log('LINK======', pageLink)
 
-          await page.goto(pageLink, { waitUntil: "networkidle2" });
+          await page.goto(pageLink, { waitUntil: 'domcontentloaded', timeout: 0 });
           await page.waitForSelector("body");
 
           const parsedPageText = await getWholePageText({ page })
@@ -139,8 +139,6 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
             pageLink,
             parsedPageText, 
           })
-
-          await new Promise(r => setTimeout(r, 2000))
 
           await pageParserLoop(page)
         }
