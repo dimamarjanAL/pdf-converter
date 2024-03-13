@@ -116,7 +116,7 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
 
     const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
     visitedPages.push(currentUrl)
-    console.log('currentUrl======', currentUrl)
+    console.log('LINK======', currentUrl)
 
     const pageParserLoop = async (page) => {
       const pageLinks = await getWholePageLinks({ page })
@@ -124,12 +124,13 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
       for (const pageLink of pageLinks) {
         if (pageLink && pageLink.includes(currentUrl) && !visitedPages.some(page => page === pageLink)) {
           visitedPages.push(pageLink)
+          console.log('LINK======', pageLink)
 
           await page.goto(pageLink, { waitUntil: "networkidle2" });
           await page.waitForSelector("body");
 
           const parsedPageText = await getWholePageText({ page })
-          console.log('parsedPageText======', parsedPageText)
+          console.log('parsedPageText======', parsedPageText.length)
 
           await createEmbeddings({
             fileId,
@@ -139,13 +140,16 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
             parsedPageText, 
           })
 
+          await new Promise(r => setTimeout(r, 2000))
+
           await pageParserLoop(page)
         }
       }
     }
 
     await pageParserLoop(page)
-    await updateFileData(fileId)
+    await updateFileData(fileId) 
+    console.log('================isOver================')
 
     return { isOk: true };
   } catch (error) {
