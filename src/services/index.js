@@ -224,7 +224,7 @@ exports.downloadDriveFileAndConvertToPdf = async ({ filesId }) => {
     );
 
     const buffer = Buffer.from(response.data);
-    console.log('buffer====', buffer)
+
     return await convert(buffer, ".pdf", undefined);
   } catch (error) {
     console.error("error in downloadDriveFileAndConvertToPdf: ", error);
