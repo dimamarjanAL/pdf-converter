@@ -124,10 +124,10 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
       for (const pageLink of pageLinks) {
         if (pageLink && pageLink.includes(currentUrl) && !visitedPages.some(page => page === pageLink)) {
           visitedPages.push(pageLink)
-          console.log('LINK======', pageLink)
-
+          
           await page.goto(pageLink, { waitUntil: 'domcontentloaded', timeout: 0 });
-          await page.waitForSelector("body");
+          await page.waitForSelector("body", { timeout: 0 });
+          console.log('LINK======', pageLink)
 
           const parsedPageText = await getWholePageText({ page })
           console.log('parsedPageText======', parsedPageText.length)
