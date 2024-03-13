@@ -114,6 +114,7 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
   for (const doc of documents) {
     const apiURL = process.env.OPENAI_API_URL;
     const apiKey = process.env.OPENAI_API_KEY;
+    console.log('apiURL======', apiURL)
 
     const embeddingResponse = await fetch(apiURL + "/v1/embeddings", {
       method: "POST",

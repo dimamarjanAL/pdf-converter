@@ -99,6 +99,7 @@ exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
 }
 
 exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, fileId }) => {
+  console.log('url======', url)
   let browser;
 
   try {
@@ -115,6 +116,7 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
 
     const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
     visitedPages.push(currentUrl)
+    console.log('currentUrl======', currentUrl)
 
     const pageParserLoop = async (page) => {
       const pageLinks = await getWholePageLinks({ page })
@@ -127,6 +129,7 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
           await page.waitForSelector("body");
 
           const parsedPageText = await getWholePageText({ page })
+          console.log('parsedPageText======', parsedPageText)
 
           await createEmbeddings({
             fileId,
