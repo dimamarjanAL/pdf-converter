@@ -114,24 +114,23 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
   for (const doc of documents) {
     const apiURL = process.env.OPENAI_API_URL;
     const apiKey = process.env.OPENAI_API_KEY;
-    console.log('apiURL======', apiURL)
-
-    const embeddingResponse = await fetch(apiURL + "/v1/embeddings", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        input: doc,
-        model: "text-embedding-ada-002",
-      }),
-    });
-    const embeddingData = await embeddingResponse.json();
-
-    const [{ embedding }] = embeddingData.data;
-
+    
     try {
+      const embeddingResponse = await fetch(apiURL + "/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          input: doc,
+          model: "text-embedding-ada-002",
+        }),
+      });
+      const embeddingData = await embeddingResponse.json();
+
+      const [{ embedding }] = embeddingData.data;
+
       await supabaseClient.from("documents").insert({
         content: doc,
         embedding,
@@ -142,7 +141,7 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
         company: companyId,
       });
     } catch (error) {
-      console.error("error in supabase insert: " + error);
+      console.error("Something went wrong: " + error);
     }
   }
 }
