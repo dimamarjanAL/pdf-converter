@@ -3,9 +3,19 @@ const util = require("util");
 const convert = util.promisify(libre.convert);
 const puppeteer = require("puppeteer");
 const { google } = require("googleapis");
-const utils = require("../utils");
 const config = require("../config");
-const { googleDrive } = require("../utils");
+const {
+  organizeFilesByFolders,
+  googleDrive,
+  getWholePageText,
+  getWholePageLinks,
+  googleAuth,
+  createEmbeddings,
+  updateFileData,
+} = require("../utils");
+
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../../.env") });
 
 exports.converter = async ({ file }) => {
   const buffer = file?.buffer;
@@ -24,13 +34,19 @@ exports.converter = async ({ file }) => {
   }
 };
 
-exports.walker = async ({ url }) => {
+exports.pageParser = async ({ url }) => {
   if (!url) {
     return { url: null, body: "", error: "The URL is missing" };
   }
   let browser;
+
   try {
-    browser = await puppeteer.launch({ headless: "new" });
+    browser = await puppeteer.launch({
+      headless: 'new',
+      ...process.env.JE_CHROMIUM_PATH && {
+          executablePath: process.env.JE_CHROMIUM_PATH,
+      },
+    });
     const page = await browser.newPage();
     await page.setUserAgent(
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
@@ -40,18 +56,9 @@ exports.walker = async ({ url }) => {
 
     await page.waitForSelector("body");
 
-    return await page.evaluate((pageUrl) => {
-      let text = "";
-      const elements = document.querySelectorAll(
-        "p, h1, h2, h3, h4, h5, h6, li, span, div",
-      );
-      elements.forEach((el) => {
-        text += el.innerText + " ";
-      });
-      text = text.replace(/[\n\t]+/g, " \n ");
-      // text = text.replace(/\s+/g, " \n ").trim();
-      return { url: pageUrl, body: text, error: null };
-    }, url);
+    const parsedPageText = await getWholePageText({ page })
+
+    return { url, body: parsedPageText, error: null };
   } catch (error) {
     console.error("something went wrong", error);
     return { url, body: "", error: error?.message || "something went wrong" };
@@ -61,6 +68,92 @@ exports.walker = async ({ url }) => {
     }
   }
 };
+
+exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
+  if (!url) {
+    return { url: null, body: "", error: "The URL is missing" };
+  }
+  let browser;
+
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      ...process.env.JE_CHROMIUM_PATH && {
+          executablePath: process.env.JE_CHROMIUM_PATH,
+      },
+    });
+    const page = await browser.newPage();
+
+    const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
+
+    return { url, isLoggedIn: currentUrl === url };
+  } catch (error) {
+    console.error("Something went wrong:", error?.message);
+    return { url, isLoggedIn: false, error: error?.message || "something went wrong" };
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, fileId }) => {
+  let browser;
+
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      ...process.env.JE_CHROMIUM_PATH && {
+          executablePath: process.env.JE_CHROMIUM_PATH,
+      },
+    });
+    const page = await browser.newPage();
+
+    const visitedPages = []
+
+    const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
+    visitedPages.push(currentUrl)
+
+    const pageParserLoop = async (page) => {
+      const pageLinks = await getWholePageLinks({ page })
+      
+      for (const pageLink of pageLinks) {
+        if (pageLink && pageLink.includes(currentUrl) && !visitedPages.some(page => page === pageLink)) {
+          visitedPages.push(pageLink)
+
+          await page.goto(pageLink, { waitUntil: "networkidle2" });
+          await page.waitForSelector("body");
+
+          const parsedPageText = await getWholePageText({ page })
+
+          await createEmbeddings({
+            fileId,
+            companyId,
+            userId,
+            pageLink,
+            parsedPageText, 
+          })
+
+          await pageParserLoop(page)
+        }
+      }
+    }
+
+    await pageParserLoop(page)
+    await updateFileData(fileId)
+
+    return { isOk: true };
+  } catch (error) {
+    console.error("Something went wrong:", error?.message);
+    return { isOk: false, error: error?.message || "something went wrong" };
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
 
 exports.listAllDriveFiles = async ({ email }) => {
   if (!email)
@@ -98,7 +191,7 @@ exports.listAllDriveFiles = async ({ email }) => {
     const filesResponse = await drive.files.list(options);
     allFiles = allFiles.concat(filesResponse.data.files);
 
-    return utils.organizeFilesByFolders(allFiles);
+    return organizeFilesByFolders(allFiles);
   } catch (error) {
     console.error("listAllDriveFiles: ", { error });
     return {
@@ -131,6 +224,7 @@ exports.downloadDriveFileAndConvertToPdf = async ({ filesId }) => {
     );
 
     const buffer = Buffer.from(response.data);
+
     return await convert(buffer, ".pdf", undefined);
   } catch (error) {
     console.error("error in downloadDriveFileAndConvertToPdf: ", error);

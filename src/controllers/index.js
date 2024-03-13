@@ -1,9 +1,16 @@
-const services = require("../services");
+const {
+  converter,
+  pageParser,
+  siteChecker,
+  siteParser,
+  listAllDriveFiles,
+  downloadDriveFileAndConvertToPdf,
+} = require("../services");
 
 exports.converter = async (req, res) => {
   try {
     const { file } = await req;
-    const { buffer, error } = await services.converter({ file });
+    const { buffer, error } = await converter({ file });
     if (error) {
       return res.status(500).json({ error });
     }
@@ -19,11 +26,28 @@ exports.converter = async (req, res) => {
   }
 };
 
-exports.walker = async (req, res) => {
+exports.pageParser = async (req, res) => {
   try {
-    const { url } = req.body;
-    const newExample = await services.walker({ url });
-    res.json(newExample);
+    const response = await pageParser(req.body);
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.siteChecker = async (req, res) => {
+  try {
+    const response = await siteChecker(req.body);
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.siteParser = async (req, res) => {
+  try {
+    const response = await siteParser(req.body);
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -32,8 +56,8 @@ exports.walker = async (req, res) => {
 exports.listDriveFiles = async (req, res) => {
   try {
     const { email } = req.body;
-    const newExample = await services.listAllDriveFiles({ email });
-    res.json(newExample);
+    const response = await listAllDriveFiles({ email });
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -42,7 +66,7 @@ exports.listDriveFiles = async (req, res) => {
 exports.downloadDriveFile = async (req, res) => {
   try {
     const { filesId } = req.body;
-    const buffer = await services.downloadDriveFileAndConvertToPdf({
+    const buffer = await downloadDriveFileAndConvertToPdf({
       filesId,
     });
 
