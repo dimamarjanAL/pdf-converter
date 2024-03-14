@@ -5,6 +5,7 @@ const {
   siteParser,
   listAllDriveFiles,
   downloadDriveFileAndConvertToPdf,
+  channelsUpdater,
 } = require("../services");
 
 exports.converter = async (req, res) => {
@@ -73,6 +74,16 @@ exports.downloadDriveFile = async (req, res) => {
     res.setHeader("Content-Disposition", "attachment; filename=file");
     res.setHeader("Content-Type", "application/pdf");
     res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.channelsUpdater = async (req, res) => {
+  try {
+    channelsUpdater(req.body);
+    const response = { isSuccess: true }
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
