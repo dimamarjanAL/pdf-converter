@@ -146,9 +146,27 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
   }
 }
 
-exports.updateFileData = (fileId) => {
+exports.createChannels = async ({ team, channelsData }) => {
+  if (team && channelsData?.length) {
+    const { error } = await supabaseClient.from("channels")
+      .upsert(channelsData.map((channel) => ({
+        slackId: channel.id || null,
+        slackName: channel.name || null,
+        nameNormalized: channel.name_normalized || null,
+        contextTeamId: channel.context_team_id || null,
+        purpose: channel.purpose || null,
+        company: team.id,
+        isPrivate: channel.is_private || false,
+      })),
+      { onConflict: "slackId" },
+    );
+    if (error) console.log(error);
+  }
+}
+
+exports.updateRowById = ({ tableName, rowId, data }) => {
   return supabaseClient
-    .from("files")
-    .update([{ inProcessing: false }])
-    .eq("id", fileId);
+    .from(tableName)
+    .update([data])
+    .eq("id", rowId);
 }

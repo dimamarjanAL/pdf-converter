@@ -9,6 +9,7 @@ const {
   siteParser,
   listDriveFiles,
   downloadDriveFile,
+  channelsUpdater,
 } = require("../controllers");
 
 const interceptFile = upload.single("file");
@@ -18,5 +19,6 @@ router.post("/site-checker", siteChecker);
 router.post("/site-parser", siteParser);
 router.post("/files", listDriveFiles);
 router.post("/upload-files", downloadDriveFile);
+router.post("/channels-updater", channelsUpdater);
 
 module.exports = router;
