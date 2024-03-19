@@ -89,9 +89,9 @@ exports.getWholePageLinks = async ({ page }) => {
     elements.forEach((el) => {
       const linkWithoutParams = el.href?.split("?")[0]
       const linkWithoutHash = linkWithoutParams?.split("#")[0]
-      const linkWithoutLastSlash = linkWithoutHash[linkWithoutHash.length - 1] === '/' ? linkWithoutHash.slice(0, -1) : linkWithoutHash
+      const clearUrl = linkWithoutHash[linkWithoutHash.length - 1] === '/' ? linkWithoutHash.slice(0, -1) : linkWithoutHash
 
-      pagesLink.push(linkWithoutLastSlash)
+      pagesLink.push(clearUrl)
     })
 
     return pagesLink

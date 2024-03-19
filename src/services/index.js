@@ -14,6 +14,7 @@ const {
   createChannels,
   updateRowById,
 } = require("../utils");
+const { urlCleaner } = require("../utils/helpers");
 const {slack} = require("../utils/slack")
 
 const path = require("path");
@@ -87,9 +88,9 @@ exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
     });
     const page = await browser.newPage();
 
-    const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
+    const currentUrl = await googleAuth({ page, url: urlCleaner(url), siteLogin, sitePassword })
 
-    return { url, isLoggedIn: currentUrl === url };
+    return { url: currentUrl, isLoggedIn: url.includes(currentUrl) };
   } catch (error) {
     console.error("Something went wrong:", error?.message);
     return { url, isLoggedIn: false, error: error?.message || "something went wrong" };
@@ -115,7 +116,7 @@ exports.siteParser = async ({ url, siteLogin, sitePassword, companyId, userId, f
 
     const visitedPages = []
 
-    const currentUrl = await googleAuth({ page, url, siteLogin, sitePassword })
+    const currentUrl = await googleAuth({ page, url: urlCleaner(url), siteLogin, sitePassword })
     visitedPages.push(currentUrl)
 
     const pageParserLoop = async () => {
