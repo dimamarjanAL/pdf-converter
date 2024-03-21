@@ -45,27 +45,27 @@ exports.googleDrive = () => {
 };
 
 exports.googleAuth = async ({ page, url, siteLogin, sitePassword }) => {
-    await page.setUserAgent(
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-    );
+  await page.setUserAgent(
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+  );
 
-    await page.goto(url, { waitUntil: "networkidle2" });
-    await page.waitForSelector("body");
-    await page.type('input[type="email"]', siteLogin);
-    await page.click('#identifierNext');
-    await new Promise(r => setTimeout(r, 3000))
-    await page.type('input[type="password"]', sitePassword)
-    await page.click('#passwordNext')
-    await page.waitForNavigation({ timeout: 5000 });
+  await page.goto(url, { waitUntil: "networkidle2" });
+  await page.waitForSelector("body");
+  await page.type('input[type="email"]', siteLogin);
+  await page.click("#identifierNext");
+  await new Promise((r) => setTimeout(r, 3000));
+  await page.type('input[type="password"]', sitePassword);
+  await page.click("#passwordNext");
+  await page.waitForNavigation({ timeout: 5000 });
 
-    return page.url();
-}
+  return page.url();
+};
 
 exports.getWholePageText = async ({ page }) => {
   return await page.evaluate(() => {
     let text = "";
     const elements = document.querySelectorAll(
-      "p, span, strong, b, em, i, h1, h2, h3, h4, h5, h6, ul, ol, li, div, a, table, tr, td, button, blockquote, code",
+      "p, span, strong, b, em, i, h1, h2, h3, h4, h5, h6, ul, ol, li, div, a, table, tr, td, button, blockquote, code"
     );
 
     elements.forEach((el) => {
@@ -79,27 +79,38 @@ exports.getWholePageText = async ({ page }) => {
 
     return text;
   });
-}
+};
 
 exports.getWholePageLinks = async ({ page }) => {
   return await page.evaluate(() => {
     const elements = document.querySelectorAll("a");
-    const pagesLink = []
+    const pagesLink = [];
 
     elements.forEach((el) => {
-      const linkWithoutParams = el.href?.split("?")[0]
-      const linkWithoutHash = linkWithoutParams?.split("#")[0]
-      const clearUrl = linkWithoutHash[linkWithoutHash.length - 1] === '/' ? linkWithoutHash.slice(0, -1) : linkWithoutHash
+      const linkWithoutParams = el.href?.split("?")[0];
+      const linkWithoutHash = linkWithoutParams?.split("#")[0];
+      const clearUrl =
+        linkWithoutHash[linkWithoutHash.length - 1] === "/"
+          ? linkWithoutHash.slice(0, -1)
+          : linkWithoutHash;
 
-      pagesLink.push(clearUrl)
-    })
+      pagesLink.push(clearUrl);
+    });
 
-    return pagesLink
+    return pagesLink;
   });
-}
+};
 
-exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedPageText }) => {
- const documents = [];
+exports.createEmbeddings = async ({
+  fileId,
+  companyId,
+  userId,
+  fileUrl,
+  parsedPageText,
+  fileName,
+  pageNumber,
+}) => {
+  const documents = [];
 
   let start = 0;
   const docSize = 2500;
@@ -107,14 +118,16 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
   while (start < parsedPageText.length) {
     const end = start + docSize;
     const chunk = parsedPageText.slice(start, end);
-    documents.push(chunk);
+    documents.push(
+      pageNumber ? `"DOCUMENT PAGE: ${pageNumber}"\n` + chunk : chunk
+    );
     start = end;
   }
 
   for (const doc of documents) {
     const apiURL = process.env.OPENAI_API_URL;
     const apiKey = process.env.OPENAI_API_KEY;
-    
+
     try {
       const embeddingResponse = await fetch(apiURL + "/v1/embeddings", {
         method: "POST",
@@ -134,8 +147,8 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
       await supabaseClient.from("documents").insert({
         content: doc,
         embedding,
-        url: pageLink,
-        file_url: pageLink,
+        url: fileName || fileUrl,
+        file_url: fileUrl,
         user_id: userId,
         file: fileId,
         company: companyId,
@@ -144,12 +157,12 @@ exports.createEmbeddings = async ({ fileId, companyId, userId, pageLink, parsedP
       console.error("Something went wrong: " + error);
     }
   }
-}
+};
 
 exports.createChannels = async ({ team, channelsData }) => {
   if (team && channelsData?.length) {
-    const { error } = await supabaseClient.from("channels")
-      .upsert(channelsData.map((channel) => ({
+    const { error } = await supabaseClient.from("channels").upsert(
+      channelsData.map((channel) => ({
         slackId: channel.id || null,
         slackName: channel.name || null,
         nameNormalized: channel.name_normalized || null,
@@ -158,15 +171,12 @@ exports.createChannels = async ({ team, channelsData }) => {
         company: team.id,
         isPrivate: channel.is_private || false,
       })),
-      { onConflict: "slackId" },
+      { onConflict: "slackId" }
     );
     if (error) console.log(error);
   }
-}
+};
 
 exports.updateRowById = ({ tableName, rowId, data }) => {
-  return supabaseClient
-    .from(tableName)
-    .update([data])
-    .eq("id", rowId);
-}
+  return supabaseClient.from(tableName).update([data]).eq("id", rowId);
+};

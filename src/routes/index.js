@@ -7,13 +7,16 @@ const {
   pageParser,
   siteChecker,
   siteParser,
+  docParser,
   listDriveFiles,
   downloadDriveFile,
   channelsUpdater,
 } = require("../controllers");
 
 const interceptFile = upload.single("file");
+
 router.post("/converter", interceptFile, converter);
+router.post("/doc-parser", interceptFile, docParser);
 router.post("/page-parser", pageParser);
 router.post("/site-checker", siteChecker);
 router.post("/site-parser", siteParser);
