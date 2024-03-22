@@ -57,8 +57,10 @@ exports.textExtractor = async (file) => {
     ].includes(file.mimetype)
   ) {
     const convertedBuffer = await convert(file.buffer, ".pdf", undefined);
+    file.mimetype = "application/pdf";
+    file.buffer = convertedBuffer;
 
-    resp = await extractTextFromPDF(convertedBuffer);
+    resp = await extractTextFromPDF(file);
   } else if (file.mimetype === "text/plain") {
     const textContent = file.buffer
       .toString("utf8")

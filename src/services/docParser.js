@@ -1,5 +1,6 @@
 const { textExtractor } = require("../utils/textExtractor");
-const { createEmbeddings, updateRowById } = require("../utils");
+const { updateRowById } = require("../utils");
+const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 
 exports.docParser = async ({ file, fileId, ...params }) => {
   try {
@@ -14,7 +15,7 @@ exports.docParser = async ({ file, fileId, ...params }) => {
         cycle += 1;
         await new Promise((resolve, _reject) => {
           setTimeout(() => {
-            createEmbeddings({
+            createOpenAiEmbeddings({
               parsedPageText: pageData.extractedText,
               fileName: file.originalname,
               pageNumber: pageData.page,
@@ -22,7 +23,7 @@ exports.docParser = async ({ file, fileId, ...params }) => {
               ...params,
             });
             resolve();
-            console.log("HANDLED PAGE #", idx, "/", numberOfPages);
+            console.log("HANDLED PAGE #", idx + 1, "/", numberOfPages);
           }, 100 * cycle);
         });
       })

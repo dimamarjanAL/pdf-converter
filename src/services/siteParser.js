@@ -4,9 +4,9 @@ const {
   googleAuth,
   getWholePageLinks,
   getWholePageText,
-  createEmbeddings,
   updateRowById,
 } = require("../utils");
+const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 const { urlCleaner } = require("../utils/helpers");
 
 const path = require("path");
@@ -58,7 +58,7 @@ exports.siteParser = async ({
 
           const parsedPageText = await getWholePageText({ page });
 
-          await createEmbeddings({
+          await createOpenAiEmbeddings({
             fileId,
             companyId,
             userId,
