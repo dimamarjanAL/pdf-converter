@@ -1,14 +1,11 @@
 const { google } = require("googleapis");
-const config = require("../config");
 
-const {
-  organizeFilesByFolders,
-  googleDrive,
-} = require("../utils");
+const { GOOGLE_URL, GOOGLE_KEYS_PATH } = process.env;
+
+const { organizeFilesByFolders, googleDrive } = require("../utils");
 
 exports.listAllDriveFiles = async ({ email }) => {
   if (!email) {
-
     return {
       folders: [],
       filesWithoutParent: [],
@@ -24,8 +21,8 @@ exports.listAllDriveFiles = async ({ email }) => {
 
   try {
     new google.auth.GoogleAuth({
-      keyFile: config.serviceGoogleKeysPath,
-      scopes: [config.googleUrl],
+      keyFile: GOOGLE_KEYS_PATH,
+      scopes: [GOOGLE_URL],
     });
 
     const drive = googleDrive();

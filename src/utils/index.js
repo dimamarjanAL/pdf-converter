@@ -1,9 +1,7 @@
 const { google } = require("googleapis");
-const config = require("../config");
 const { supabaseClient } = require("../utils/supabaseClient");
 
-const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+const { GOOGLE_URL, GOOGLE_KEYS_PATH } = process.env;
 
 exports.organizeFilesByFolders = (files) => {
   const foldersById = {};
@@ -38,8 +36,8 @@ exports.organizeFilesByFolders = (files) => {
 
 exports.googleDrive = () => {
   const auth = new google.auth.GoogleAuth({
-    keyFile: config.serviceGoogleKeysPath,
-    scopes: [config.googleUrl],
+    keyFile: GOOGLE_KEYS_PATH,
+    scopes: [GOOGLE_URL],
   });
   return google.drive({ version: "v3", auth });
 };
@@ -117,8 +115,4 @@ exports.createChannels = async ({ team, channelsData }) => {
     );
     if (error) console.log(error);
   }
-};
-
-exports.updateRowById = ({ tableName, rowId, data }) => {
-  return supabaseClient.from(tableName).update([data]).eq("id", rowId);
 };

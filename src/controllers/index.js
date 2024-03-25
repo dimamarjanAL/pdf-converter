@@ -1,13 +1,11 @@
 const { converter } = require("../services/converter");
 const { docParser } = require("../services/docParser");
+const { googleDocParser } = require("../services/googleDocParser");
 const { pageParser } = require("../services/pageParser");
 const { siteChecker } = require("../services/siteChecker");
 const { siteParser } = require("../services/siteParser");
 const { channelsUpdater } = require("../services/channelsUpdater");
 const { listAllDriveFiles } = require("../services/listAllDriveFiles");
-const {
-  downloadDriveFileAndConvertToPdf,
-} = require("../services/downloadDriveFileAndConvertToPdf");
 
 exports.converter = async (req, res) => {
   try {
@@ -31,6 +29,16 @@ exports.converter = async (req, res) => {
 exports.docParser = async (req, res) => {
   try {
     docParser({ file: req.file, ...req.body });
+    const response = { isSuccess: true };
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.googleDocParser = async (req, res) => {
+  try {
+    googleDocParser(req.body);
     const response = { isSuccess: true };
     res.json(response);
   } catch (error) {
@@ -80,21 +88,6 @@ exports.listDriveFiles = async (req, res) => {
     const { email } = req.body;
     const response = await listAllDriveFiles({ email });
     res.json(response);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-exports.downloadDriveFile = async (req, res) => {
-  try {
-    const { filesId } = req.body;
-    const buffer = await downloadDriveFileAndConvertToPdf({
-      filesId,
-    });
-
-    res.setHeader("Content-Disposition", "attachment; filename=file");
-    res.setHeader("Content-Type", "application/pdf");
-    res.send(buffer);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }

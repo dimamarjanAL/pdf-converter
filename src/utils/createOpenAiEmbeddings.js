@@ -1,5 +1,7 @@
 const { supabaseClient } = require("../utils/supabaseClient");
 
+const { OPENAI_API_URL, OPENAI_API_KEY } = process.env;
+
 exports.createOpenAiEmbeddings = async ({
   fileId,
   companyId,
@@ -27,8 +29,8 @@ exports.createOpenAiEmbeddings = async ({
   }
 
   for (const doc of documents) {
-    const apiURL = process.env.OPENAI_API_URL;
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiURL = OPENAI_API_URL;
+    const apiKey = OPENAI_API_KEY;
 
     try {
       const embeddingResponse = await fetch(apiURL + "/v1/embeddings", {
