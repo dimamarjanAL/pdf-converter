@@ -8,31 +8,18 @@ const { textExtractor } = require("../utils/textExtractor");
 const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 const { updateRowById } = require("../utils/helpers");
 
-exports.googleDocParser = async ({ docs }) => {
-  try {
-    for (const doc of docs) {
-      const fileBuffer = await getGoogleDriveFile({ fileId: doc.id });
-
-      const emitFile = {
-        buffer: fileBuffer,
-        mimetype: doc.mimeType,
-        name: doc.name,
-      };
-
-      const fileKey = `${doc.companyId}-${doc.name}`;
-
-      const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
-      console.log("========FILE UPLOADED========", fileLink);
-
+exports.googleDocParserCreateFile = async ({ docs }) => {
+  return Promise.all(
+    docs.map(async (doc) => {
       const { data: fileData, error } = await createOrUpdateFileDb({
         userId: doc.userId,
-        fileURL: fileLink,
+        fileURL: null,
         category: doc.category,
         title: doc.name,
         description: doc.description,
         name: doc.name,
         date: format(new Date(), "MM/dd/yyyy"),
-        expireDate: Date.parse(doc.date) / 1000,
+        expireDate: doc.date / 1000,
         admin: doc.admin,
         company: doc.companyId,
         fromSiteData: false,
@@ -43,20 +30,46 @@ exports.googleDocParser = async ({ docs }) => {
 
       if (error) {
         console.error("Something went wrong:", error);
+        return doc;
       }
 
-      const file = fileData[0];
+      return { ...doc, fileData: fileData[0] };
+    })
+  );
+};
 
-      await setSchedulerMessage({
-        category: file.category,
-        expDate: Date.parse(file.date) / 1000,
-        admin: file.admin.email,
-        fileName: file.name,
-        fileUrl: file.fileURL,
-        fileId: file.id,
+exports.googleDocParser = async (createdFiles) => {
+  try {
+    for (const { fileData, ...file } of createdFiles) {
+      const fileBuffer = await getGoogleDriveFile({ fileId: file.id });
+
+      const emitFile = {
+        buffer: fileBuffer,
+        mimetype: file.mimeType,
+        name: file.name,
+      };
+
+      const fileKey = `${file.companyId}-${file.name}`;
+
+      const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
+      console.log("========FILE UPLOADED========", fileLink);
+
+      await updateRowById({
+        tableName: "files",
+        rowId: fileData.id,
+        data: { fileURL: fileLink },
       });
 
-      console.log("========START========", doc.name);
+      await setSchedulerMessage({
+        category: fileData.category,
+        expDate: Date.parse(fileData.date) / 1000,
+        admin: fileData.admin.email,
+        fileName: fileData.name,
+        fileUrl: fileData.fileURL,
+        fileId: fileData.id,
+      });
+
+      console.log("========START========", file.name);
       const pagesData = await textExtractor(emitFile);
       const numberOfPages = pagesData.length;
 
@@ -68,12 +81,12 @@ exports.googleDocParser = async ({ docs }) => {
           await new Promise((resolve, _reject) => {
             setTimeout(() => {
               createOpenAiEmbeddings({
-                fileId: file.id,
-                companyId: doc.companyId,
-                userId: doc.userId,
+                fileId: fileData.id,
+                companyId: file.companyId,
+                userId: file.userId,
                 fileUrl: fileLink,
                 parsedPageText: pageData.extractedText,
-                fileName: file.name,
+                fileName: fileData.name,
                 pageNumber: pageData.page,
               });
               resolve();
@@ -85,11 +98,11 @@ exports.googleDocParser = async ({ docs }) => {
 
       await updateRowById({
         tableName: "files",
-        rowId: file.id,
+        rowId: fileData.id,
         data: { inProcessing: false },
       });
 
-      console.log("========FINISH========", doc.name);
+      console.log("========FINISH========", file.name);
     }
 
     return { isOk: true };

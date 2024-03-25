@@ -7,36 +7,39 @@ const { textExtractor } = require("../utils/textExtractor");
 const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 const { updateRowById } = require("../utils/helpers");
 
-exports.docParser = async ({ file, ...params }) => {
+exports.docParserCreateFile = async ({ file, ...params }) => {
+  const fileKey = `${params.companyId}-${file.originalname}`;
+
+  const fileLink = await uploadFileToS3({ file, fileKey });
+  console.log("========FILE UPLOADED========", fileLink);
+
+  const { data: fileData, error } = await createOrUpdateFileDb({
+    userId: params.userId,
+    fileURL: fileLink,
+    category: params.category,
+    title: file.originalname,
+    description: params.description,
+    name: file.originalname,
+    date: format(new Date(), "MM/dd/yyyy"),
+    expireDate: params.date / 1000,
+    admin: params.admin,
+    company: params.companyId,
+    fromSiteData: false,
+    fromGoogle: false,
+    isPrivate: false,
+    inProcessing: true,
+  });
+
+  if (error) {
+    console.error("Something went wrong:", error);
+    return { isOk: false, error: error?.message || "something went wrong" };
+  }
+
+  return { isOk: true, ...fileData[0] };
+};
+
+exports.docParser = async ({ file, createdFile, ...params }) => {
   try {
-    const fileKey = `${params.companyId}-${file.originalname}`;
-
-    const fileLink = await uploadFileToS3({ file, fileKey });
-    console.log("========FILE UPLOADED========", fileLink);
-
-    const { data: fileData, error } = await createOrUpdateFileDb({
-      userId: params.userId,
-      fileURL: fileLink,
-      category: params.category,
-      title: file.originalname,
-      description: params.description,
-      name: file.originalname,
-      date: format(new Date(), "MM/dd/yyyy"),
-      expireDate: Date.parse(params.date) / 1000,
-      admin: params.admin,
-      company: params.companyId,
-      fromSiteData: false,
-      fromGoogle: false,
-      isPrivate: false,
-      inProcessing: true,
-    });
-
-    if (error) {
-      console.error("Something went wrong:", error);
-    }
-
-    const createdFile = fileData[0];
-
     await setSchedulerMessage({
       category: createdFile.category,
       expDate: Date.parse(createdFile.date) / 1000,
@@ -61,7 +64,7 @@ exports.docParser = async ({ file, ...params }) => {
               fileId: createdFile.id,
               companyId: params.companyId,
               userId: params.userId,
-              fileUrl: fileLink,
+              fileUrl: createdFile.fileURL,
               parsedPageText: pageData.extractedText,
               fileName: createdFile.name,
               pageNumber: pageData.page,

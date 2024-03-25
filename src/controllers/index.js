@@ -1,6 +1,9 @@
 const { converter } = require("../services/converter");
-const { docParser } = require("../services/docParser");
-const { googleDocParser } = require("../services/googleDocParser");
+const { docParser, docParserCreateFile } = require("../services/docParser");
+const {
+  googleDocParser,
+  googleDocParserCreateFile,
+} = require("../services/googleDocParser");
 const { pageParser } = require("../services/pageParser");
 const { siteChecker } = require("../services/siteChecker");
 const { siteParser } = require("../services/siteParser");
@@ -28,7 +31,11 @@ exports.converter = async (req, res) => {
 
 exports.docParser = async (req, res) => {
   try {
-    docParser({ file: req.file, ...req.body });
+    const createdFile = await docParserCreateFile({
+      file: req.file,
+      ...req.body,
+    });
+    docParser({ file: req.file, createdFile, ...req.body });
     const response = { isSuccess: true };
     res.json(response);
   } catch (error) {
@@ -38,7 +45,8 @@ exports.docParser = async (req, res) => {
 
 exports.googleDocParser = async (req, res) => {
   try {
-    googleDocParser(req.body);
+    const createdFiles = await googleDocParserCreateFile(req.body);
+    googleDocParser(createdFiles);
     const response = { isSuccess: true };
     res.json(response);
   } catch (error) {
