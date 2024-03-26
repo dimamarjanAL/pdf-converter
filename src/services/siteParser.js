@@ -16,6 +16,7 @@ exports.siteParser = async ({
   fileId,
 }) => {
   let browser;
+  console.log("===START SITE PARSE PROCESS===", url);
 
   try {
     browser = await puppeteer.launch({
@@ -29,12 +30,14 @@ exports.siteParser = async ({
 
     const visitedPages = [];
 
+    console.log("===SITE CHECK AUTH===");
     const currentUrl = await googleAuth({
       page,
       url: urlCleaner(url),
       siteLogin,
       sitePassword,
     });
+    console.log("===SITE AUTH OK===");
     visitedPages.push(currentUrl);
 
     const pageParserLoop = async () => {
@@ -46,6 +49,7 @@ exports.siteParser = async ({
           pageLink.includes(currentUrl) &&
           !visitedPages.some((page) => page === pageLink)
         ) {
+          console.log("===SITE PAGE PARSING===", visitedPages.length, pageLink);
           visitedPages.push(pageLink);
 
           await page.goto(pageLink, { waitUntil: "networkidle2", timeout: 0 });
@@ -73,6 +77,7 @@ exports.siteParser = async ({
       data: { inProcessing: false },
     });
 
+    console.log("===FINISH SITE PARSE PROCESS===", url);
     return { isOk: true };
   } catch (error) {
     console.error("Something went wrong:", error?.message);

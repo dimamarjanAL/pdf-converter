@@ -21,12 +21,14 @@ exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
     });
     const page = await browser.newPage();
 
+    console.log("===SITE CHECK AUTH===", url);
     const currentUrl = await googleAuth({
       page,
       url: urlCleaner(url),
       siteLogin,
       sitePassword,
     });
+    console.log("===SITE AUTH STATUS===", url.includes(currentUrl));
 
     return { url: currentUrl, isLoggedIn: url.includes(currentUrl) };
   } catch (error) {

@@ -52,7 +52,7 @@ exports.googleDocParser = async (createdFiles) => {
       const fileKey = `${file.companyId}-${file.name}`;
 
       const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
-      console.log("========FILE UPLOADED========", fileLink);
+      console.log("===FILE UPLOADED===", fileLink);
 
       await updateRowById({
         tableName: "files",
@@ -69,7 +69,7 @@ exports.googleDocParser = async (createdFiles) => {
         fileId: fileData.id,
       });
 
-      console.log("========START========", file.name);
+      console.log("===START===", file.name);
       const pagesData = await textExtractor(emitFile);
       const numberOfPages = pagesData.length;
 
@@ -102,7 +102,7 @@ exports.googleDocParser = async (createdFiles) => {
         data: { inProcessing: false },
       });
 
-      console.log("========FINISH========", file.name);
+      console.log("===FINISH===", file.name);
     }
 
     return { isOk: true };

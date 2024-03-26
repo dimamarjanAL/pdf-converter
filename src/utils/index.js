@@ -54,7 +54,7 @@ exports.googleAuth = async ({ page, url, siteLogin, sitePassword }) => {
   await new Promise((r) => setTimeout(r, 3000));
   await page.type('input[type="password"]', sitePassword);
   await page.click("#passwordNext");
-  await page.waitForNavigation({ timeout: 5000 });
+  await page.waitForNavigation({ timeout: 15000 });
 
   return page.url();
 };
