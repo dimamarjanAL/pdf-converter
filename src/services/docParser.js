@@ -35,20 +35,23 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
     return { isOk: false, error: error?.message || "something went wrong" };
   }
 
-  return { isOk: true, ...fileData[0] };
+  const createdFile = fileData[0];
+
+  const response = await setSchedulerMessage({
+    category: createdFile.category,
+    expDate: createdFile.expireDate,
+    admin: createdFile.admin,
+    fileName: createdFile.name,
+    fileUrl: createdFile.fileURL,
+    fileId: createdFile.id,
+  });
+  console.log("===SET SCHEDULER===", response.message);
+
+  return { isOk: true, ...createdFile, reminderStatus: response.isSuccess };
 };
 
 exports.docParser = async ({ file, createdFile, ...params }) => {
   try {
-    await setSchedulerMessage({
-      category: createdFile.category,
-      expDate: Date.parse(createdFile.date) / 1000,
-      admin: createdFile.admin.email,
-      fileName: createdFile.name,
-      fileUrl: createdFile.fileURL,
-      fileId: createdFile.id,
-    });
-
     console.log("===START===", createdFile.name);
     const pagesData = await textExtractor(file);
     const numberOfPages = pagesData.length;

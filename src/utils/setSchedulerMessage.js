@@ -1,9 +1,8 @@
 const { supabaseClient } = require("./supabaseClient");
-const { SLACK_BOT_TOKEN, SLACK_USERS_LIST_API, SLACK_SCHEDULE_MESSAGE_API } =
-  process.env;
+const { SLACK_USERS_LIST_API, SLACK_SCHEDULE_MESSAGE_API } = process.env;
 
 const slackSchedulerMessageHandler = async ({
-  email,
+  admin,
   channel,
   expDate,
   fileName,
@@ -15,27 +14,28 @@ const slackSchedulerMessageHandler = async ({
       method: "GET",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+        Authorization: `Bearer ${admin.slackToken}`,
       },
     });
     const users = await usersResponse.text();
-
     const response = JSON.parse(users);
+
     const foundUser = response.members.find(
-      (member) => member.profile.email === email.trim()
+      (member) => member.profile.email === admin.email.trim()
     );
 
     if (!foundUser) {
-      return new Response(
-        `The user with the email address ${email} is not in Slack`
-      );
+      return {
+        isSuccess: false,
+        message: `The user with the email address ${admin.email} is not in Slack`,
+      };
     }
 
     const resp = await fetch(SLACK_SCHEDULE_MESSAGE_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+        Authorization: `Bearer ${admin.slackToken}`,
       },
       body: JSON.stringify({
         channel,
@@ -53,12 +53,21 @@ const slackSchedulerMessageHandler = async ({
         .eq("id", fileId)
         .select();
 
-      return new Response(`Reminder successfully set to ${d.toString()}`);
+      return {
+        isSuccess: false,
+        message: `Reminder successfully set to ${d.toString()}`,
+      };
     }
 
-    return new Response(`Reminder is not set. Error: ${respData.error}`);
+    return {
+      isSuccess: false,
+      message: `Reminder is not set. Error: ${respData.error}`,
+    };
   } catch (error) {
-    return new Response("An error occurred while processing the request.");
+    return {
+      isSuccess: false,
+      message: "An error occurred while processing the request.",
+    };
   }
 };
 
@@ -76,27 +85,27 @@ exports.setSchedulerMessage = async ({
     .eq("category", category);
 
   if (channelDataError) {
-    console.error(channelDataError);
+    return {
+      isSuccess: false,
+      message: channelDataError,
+    };
   }
   if (!channelData?.length || (channelData && !channelData[0]?.slackId)) {
-    console.error(`The category '${category}' has no channel`);
-    return;
+    return {
+      isSuccess: false,
+      message: `The category '${category}' has no channel`,
+    };
   } else {
     if (admin) {
       try {
-        const slackResp = await slackSchedulerMessageHandler({
-          email: admin,
+        return slackSchedulerMessageHandler({
+          admin,
           channel: channelData[0].slackId,
           fileName,
           fileUrl,
           expDate,
           fileId,
         });
-        const slackRespDate = await slackResp.text();
-
-        if (slackRespDate) {
-          console.log("Response:", slackRespDate);
-        }
       } catch (err) {
         console.error("Something went wrong:", err);
       }

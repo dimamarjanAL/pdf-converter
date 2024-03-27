@@ -36,7 +36,10 @@ exports.docParser = async (req, res) => {
       ...req.body,
     });
     docParser({ file: req.file, createdFile, ...req.body });
-    const response = { isSuccess: true };
+    const response = {
+      isSuccess: true,
+      reminderStatus: createdFile.reminderStatus,
+    };
     res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
@@ -47,7 +50,10 @@ exports.googleDocParser = async (req, res) => {
   try {
     const createdFiles = await googleDocParserCreateFile(req.body);
     googleDocParser(createdFiles);
-    const response = { isSuccess: true };
+    const response = {
+      isSuccess: true,
+      reminderStatus: createdFiles.some((file) => file.createdFiles === false),
+    };
     res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });

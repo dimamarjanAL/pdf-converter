@@ -33,7 +33,19 @@ exports.googleDocParserCreateFile = async ({ docs }) => {
         return doc;
       }
 
-      return { ...doc, fileData: fileData[0] };
+      const file = fileData[0];
+
+      const response = await setSchedulerMessage({
+        category: file.category,
+        expDate: file.expireDate,
+        admin: file.admin,
+        fileName: file.name,
+        fileUrl: file.fileURL,
+        fileId: file.id,
+      });
+      console.log("===SET SCHEDULER===", response.message);
+
+      return { ...doc, fileData: file, reminderStatus: response.isSuccess };
     })
   );
 };
@@ -58,15 +70,6 @@ exports.googleDocParser = async (createdFiles) => {
         tableName: "files",
         rowId: fileData.id,
         data: { fileURL: fileLink },
-      });
-
-      await setSchedulerMessage({
-        category: fileData.category,
-        expDate: Date.parse(fileData.date) / 1000,
-        admin: fileData.admin.email,
-        fileName: fileData.name,
-        fileUrl: fileData.fileURL,
-        fileId: fileData.id,
       });
 
       console.log("===START===", file.name);

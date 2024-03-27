@@ -30,7 +30,7 @@ exports.createOrUpdateFileDb = async ({
         },
       ])
       .eq("name", name)
-      .select("*,admin(email)");
+      .select("*,admin(email,slackToken)");
 
     return { data, error };
   } else {
@@ -45,7 +45,7 @@ exports.createOrUpdateFileDb = async ({
           company,
         },
       ])
-      .select("*,admin(email)");
+      .select("*,admin(email,slackToken)");
 
     return { data, error };
   }
