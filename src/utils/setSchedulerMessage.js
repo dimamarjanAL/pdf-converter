@@ -80,6 +80,13 @@ exports.setSchedulerMessage = async ({
   fileUrl,
   fileId,
 }) => {
+  if (!expDate) {
+    return {
+      isSuccess: true,
+      message: `Expiration date is not select`,
+    };
+  }
+
   const { data: channelData, error: channelDataError } = await supabaseClient
     .from("channels")
     .select("slackId")
