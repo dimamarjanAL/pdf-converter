@@ -1,4 +1,4 @@
-const { format } = require("date-fns");
+const moment = require("moment");
 
 const { getGoogleDriveFile } = require("../utils/getGoogleDriveFile");
 const { uploadFileToS3 } = require("../utils/storageS3");
@@ -18,8 +18,8 @@ exports.googleDocParserCreateFile = async ({ docs }) => {
         title: doc.name,
         description: doc.description,
         name: doc.name,
-        date: format(new Date(), "MM/dd/yyyy"),
-        expireDate: doc.date / 1000,
+        date: moment().format("MM/DD/YYYY"),
+        expireDate: Date.parse(doc.date) / 1000,
         admin: doc.admin,
         company: doc.companyId,
         fromSiteData: false,
@@ -29,12 +29,25 @@ exports.googleDocParserCreateFile = async ({ docs }) => {
       });
 
       if (error) {
-        console.error("Something went wrong:", error);
+        console.log(
+          "FILE CREATING ERROR",
+          "|",
+          moment().format("HH:mm:ss"),
+          "|",
+          error
+        );
         return doc;
       }
 
       const file = fileData[0];
-
+      console.log("======", {
+        category: file.category,
+        expDate: file.expireDate,
+        admin: file.admin,
+        fileName: file.name,
+        fileUrl: file.fileURL,
+        fileId: file.id,
+      });
       const response = await setSchedulerMessage({
         category: file.category,
         expDate: file.expireDate,
@@ -43,7 +56,14 @@ exports.googleDocParserCreateFile = async ({ docs }) => {
         fileUrl: file.fileURL,
         fileId: file.id,
       });
-      console.log("===SET SCHEDULER===", response.message);
+
+      console.log(
+        "SET SCHEDULER",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        response.message
+      );
 
       return { ...doc, fileData: file, reminderStatus: response.isSuccess };
     })
@@ -64,7 +84,13 @@ exports.googleDocParser = async (createdFiles) => {
       const fileKey = `${file.companyId}-${file.name}`;
 
       const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
-      console.log("===FILE UPLOADED===", fileLink);
+      console.log(
+        "FILE UPLOADED",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        fileLink
+      );
 
       await updateRowById({
         tableName: "files",
@@ -72,9 +98,23 @@ exports.googleDocParser = async (createdFiles) => {
         data: { fileURL: fileLink },
       });
 
-      console.log("===START===", file.name);
+      console.log(
+        "GOOGLE DOC PARSER START",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        file.name
+      );
       const pagesData = await textExtractor(emitFile);
       const numberOfPages = pagesData.length;
+
+      console.log(
+        "GOOGLE DOC PARSER",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        `Found ${numberOfPages} pages`
+      );
 
       let cycle = 0;
 
@@ -93,10 +133,17 @@ exports.googleDocParser = async (createdFiles) => {
                 pageNumber: pageData.page,
               });
               resolve();
-              console.log("HANDLED PAGE #", idx + 1, "/", numberOfPages);
             }, 100 * cycle);
           });
         })
+      );
+
+      console.log(
+        "GOOGLE DOC PARSER",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        `Handled ${numberOfPages} pages`
       );
 
       await updateRowById({
@@ -105,11 +152,24 @@ exports.googleDocParser = async (createdFiles) => {
         data: { inProcessing: false },
       });
 
-      console.log("===FINISH===", file.name);
+      console.log(
+        "GOOGLE DOC PARSER FINISH",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        file.name
+      );
     }
 
     return { isOk: true };
   } catch (error) {
+    console.log(
+      "GOOGLE DOC PARSER ERROR",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      error?.message
+    );
     return { isOk: false, error: error?.message || "something went wrong" };
   }
 };

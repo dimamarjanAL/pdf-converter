@@ -1,3 +1,4 @@
+const moment = require("moment");
 const { supabaseClient } = require("./supabaseClient");
 const { SLACK_USERS_LIST_API, SLACK_SCHEDULE_MESSAGE_API } = process.env;
 
@@ -46,7 +47,7 @@ const slackSchedulerMessageHandler = async ({
     const respData = await resp.json();
 
     if (respData.ok) {
-      const d = new Date(expDate * 1000);
+      const date = moment(expDate * 1000).format("MM/DD/YYYY HH:mm");
       await supabaseClient
         .from("files")
         .update({ reminder: respData })
@@ -54,8 +55,8 @@ const slackSchedulerMessageHandler = async ({
         .select();
 
       return {
-        isSuccess: false,
-        message: `Reminder successfully set to ${d.toString()}`,
+        isSuccess: true,
+        message: `Reminder successfully set to ${date}`,
       };
     }
 
@@ -66,7 +67,7 @@ const slackSchedulerMessageHandler = async ({
   } catch (error) {
     return {
       isSuccess: false,
-      message: "An error occurred while processing the request.",
+      message: "REMINDER: An error occurred while processing the request.",
     };
   }
 };

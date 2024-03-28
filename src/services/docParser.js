@@ -1,4 +1,4 @@
-const { format } = require("date-fns");
+const moment = require("moment");
 
 const { uploadFileToS3 } = require("../utils/storageS3");
 const { createOrUpdateFileDb } = require("../utils/createOrUpdateFileDb");
@@ -11,7 +11,7 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
   const fileKey = `${params.companyId}-${file.originalname}`;
 
   const fileLink = await uploadFileToS3({ file, fileKey });
-  console.log("===FILE UPLOADED===", fileLink);
+  console.log("FILE UPLOADED", "|", moment().format("HH:mm:ss"), "|", fileLink);
 
   const { data: fileData, error } = await createOrUpdateFileDb({
     userId: params.userId,
@@ -20,7 +20,7 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
     title: file.originalname,
     description: params.description,
     name: file.originalname,
-    date: format(new Date(), "MM/dd/yyyy"),
+    date: moment().format("MM/DD/YYYY"),
     expireDate: params.date / 1000,
     admin: params.admin,
     company: params.companyId,
@@ -31,7 +31,13 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
   });
 
   if (error) {
-    console.error("Something went wrong:", error);
+    console.log(
+      "FILE CREATING ERROR",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      error
+    );
     return { isOk: false, error: error?.message || "something went wrong" };
   }
 
@@ -45,16 +51,36 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
     fileUrl: createdFile.fileURL,
     fileId: createdFile.id,
   });
-  console.log("===SET SCHEDULER===", response.message);
+  console.log(
+    "SET SCHEDULER",
+    "|",
+    moment().format("HH:mm:ss"),
+    "|",
+    response.message
+  );
 
   return { isOk: true, ...createdFile, reminderStatus: response.isSuccess };
 };
 
 exports.docParser = async ({ file, createdFile, ...params }) => {
   try {
-    console.log("===START===", createdFile.name);
+    console.log(
+      "DOC PARSER START",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      createdFile.name
+    );
     const pagesData = await textExtractor(file);
     const numberOfPages = pagesData.length;
+
+    console.log(
+      "DOC PARSER",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      `Found ${numberOfPages} pages`
+    );
 
     let cycle = 0;
 
@@ -73,10 +99,17 @@ exports.docParser = async ({ file, createdFile, ...params }) => {
               pageNumber: pageData.page,
             });
             resolve();
-            console.log("HANDLED PAGE #", idx + 1, "/", numberOfPages);
           }, 100 * cycle);
         });
       })
+    );
+
+    console.log(
+      "DOC PARSER",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      `Handled ${numberOfPages} pages`
     );
 
     await updateRowById({
@@ -85,10 +118,23 @@ exports.docParser = async ({ file, createdFile, ...params }) => {
       data: { inProcessing: false },
     });
 
-    console.log("===FINISH===", createdFile.name);
+    console.log(
+      "DOC PARSER FINISH",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      createdFile.name
+    );
 
     return { isOk: true };
   } catch (error) {
+    console.log(
+      "DOC PARSER ERROR",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      error?.message
+    );
     return { isOk: false, error: error?.message || "something went wrong" };
   }
 };

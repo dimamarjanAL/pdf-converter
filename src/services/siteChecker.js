@@ -1,6 +1,7 @@
+const moment = require("moment");
 const puppeteer = require("puppeteer");
 
-const { googleAuth } = require("../utils");
+const { googleAuth } = require("../utils/googleAuth");
 const { urlCleaner } = require("../utils/helpers");
 
 const { JE_CHROMIUM_PATH } = process.env;
@@ -21,18 +22,22 @@ exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
     });
     const page = await browser.newPage();
 
-    console.log("===SITE CHECK AUTH===", url);
     const currentUrl = await googleAuth({
       page,
       url: urlCleaner(url),
       siteLogin,
       sitePassword,
     });
-    console.log("===SITE AUTH STATUS===", url.includes(currentUrl));
 
     return { url: currentUrl, isLoggedIn: url.includes(currentUrl) };
   } catch (error) {
-    console.error("Something went wrong:", error?.message);
+    console.log(
+      "SITE AUTH ERROR",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      error?.message
+    );
     return {
       url,
       isLoggedIn: false,

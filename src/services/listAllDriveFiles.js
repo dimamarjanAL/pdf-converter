@@ -2,7 +2,7 @@ const { google } = require("googleapis");
 
 const { GOOGLE_URL, GOOGLE_KEYS_PATH } = process.env;
 
-const { organizeFilesByFolders, googleDrive } = require("../utils");
+const { organizeFilesByFolders, googleDrive } = require("../utils/googleDrive");
 
 exports.listAllDriveFiles = async ({ email }) => {
   if (!email) {

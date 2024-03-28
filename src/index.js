@@ -24,6 +24,11 @@ app.use(express.json());
 const routes = require("./routes");
 app.use("/api/", routes);
 
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  return res.status(status).send(err.message);
+});
+
 app.listen(SERVER_PORT, () => {
   console.log(`Server is running on port ${SERVER_PORT}`);
 });

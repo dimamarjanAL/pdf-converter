@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-const { getWholePageText } = require("../utils");
+const { getWholePageText } = require("../utils/helpers");
 
 const { JE_CHROMIUM_PATH } = process.env;
 

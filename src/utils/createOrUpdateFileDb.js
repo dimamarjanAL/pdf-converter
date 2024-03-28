@@ -1,3 +1,4 @@
+const moment = require("moment");
 const { supabaseClient } = require("../utils/supabaseClient");
 
 exports.createOrUpdateFileDb = async ({
@@ -14,7 +15,13 @@ exports.createOrUpdateFileDb = async ({
     .eq("company", company);
 
   if (error) {
-    console.error(error);
+    console.log(
+      "FILE SEARCHING ERROR",
+      "|",
+      moment().format("HH:mm:ss"),
+      "|",
+      error
+    );
   }
 
   if (data?.length) {

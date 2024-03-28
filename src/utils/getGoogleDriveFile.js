@@ -1,3 +1,4 @@
+const moment = require("moment");
 const { google } = require("googleapis");
 
 const { GOOGLE_URL, GOOGLE_KEYS_PATH } = process.env;
@@ -15,7 +16,8 @@ exports.getGoogleDriveFile = async ({ fileId }) => {
     });
 
     const drive = google.drive({ version: "v3", auth });
-    console.log("Trying to download file...");
+
+    console.log("TRYING TO DOWNLOAD FILE", "|", moment().format("HH:mm:ss"));
 
     const response = await drive.files.get(
       { fileId, alt: "media" },

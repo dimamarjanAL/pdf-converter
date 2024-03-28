@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const upload = multer();
+const { tryCatchWrapper } = require("../utils/helpers");
 const {
   converter,
   docParser,
@@ -15,13 +16,13 @@ const {
 
 const interceptFile = upload.single("file");
 
-router.post("/converter", interceptFile, converter);
-router.post("/doc-parser", interceptFile, docParser);
-router.post("/google-doc-parser", googleDocParser);
-router.post("/page-parser", pageParser);
-router.post("/site-checker", siteChecker);
-router.post("/site-parser", siteParser);
-router.post("/files", listDriveFiles);
-router.post("/channels-updater", channelsUpdater);
+router.post("/converter", interceptFile, tryCatchWrapper(converter));
+router.post("/doc-parser", interceptFile, tryCatchWrapper(docParser));
+router.post("/google-doc-parser", tryCatchWrapper(googleDocParser));
+router.post("/page-parser", tryCatchWrapper(pageParser));
+router.post("/site-checker", tryCatchWrapper(siteChecker));
+router.post("/site-parser", tryCatchWrapper(siteParser));
+router.post("/files", tryCatchWrapper(listDriveFiles));
+router.post("/channels-updater", tryCatchWrapper(channelsUpdater));
 
 module.exports = router;

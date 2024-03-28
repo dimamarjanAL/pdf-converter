@@ -1,5 +1,4 @@
-const { createChannels } = require("../utils");
-const { updateRowById } = require("../utils/helpers");
+const { updateRowById, createChannels } = require("../utils/helpers");
 
 const { SLACK_CONVERSATIONS_LIST_API } = process.env;
 

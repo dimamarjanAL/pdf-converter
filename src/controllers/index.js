@@ -6,7 +6,7 @@ const {
 } = require("../services/googleDocParser");
 const { pageParser } = require("../services/pageParser");
 const { siteChecker } = require("../services/siteChecker");
-const { siteParser } = require("../services/siteParser");
+const { siteParser, siteParserCreateFile } = require("../services/siteParser");
 const { channelsUpdater } = require("../services/channelsUpdater");
 const { listAllDriveFiles } = require("../services/listAllDriveFiles");
 
@@ -38,7 +38,7 @@ exports.docParser = async (req, res) => {
     docParser({ file: req.file, createdFile, ...req.body });
     const response = {
       isSuccess: true,
-      reminderStatus: createdFile.reminderStatus,
+      reminderError: !createdFile.reminderStatus,
     };
     res.json(response);
   } catch (error) {
@@ -52,7 +52,7 @@ exports.googleDocParser = async (req, res) => {
     googleDocParser(createdFiles);
     const response = {
       isSuccess: true,
-      reminderStatus: createdFiles.some((file) => file.createdFiles === false),
+      reminderError: createdFiles.some((file) => !file.reminderStatus),
     };
     res.json(response);
   } catch (error) {
@@ -80,7 +80,12 @@ exports.siteChecker = async (req, res) => {
 
 exports.siteParser = async (req, res) => {
   try {
-    const response = await siteParser(req.body);
+    const createdFiles = await siteParserCreateFile(req.body);
+    siteParser(createdFiles);
+    const response = {
+      isSuccess: true,
+      reminderError: createdFiles.some((file) => !file.reminderStatus),
+    };
     res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
