@@ -21,8 +21,7 @@ exports.tryCatchWrapper = (cb) => async (req, res, next) => {
   const request = await cb(req, res, next).catch((err) => next(err));
 
   console.log(
-    method,
-    "|",
+    `[${method}]`,
     moment().format("HH:mm:ss"),
     "|",
     Date.now() - start,
@@ -90,4 +89,19 @@ exports.getWholePageLinks = async ({ page }) => {
 
     return pagesLink;
   });
+};
+
+exports.isValidMimeType = (mimeType) => {
+  const validMimeTypes = [
+    // "application/vnd.google-apps.presentation",
+    // "application/vnd.google-apps.spreadsheet",
+    // "application/vnd.google-apps.document",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain",
+    "application/pdf",
+  ];
+  return validMimeTypes.includes(mimeType);
 };

@@ -12,7 +12,8 @@ exports.createOrUpdateFileDb = async ({
     .from("files")
     .select()
     .eq("name", name)
-    .eq("company", company);
+    .eq("company", company)
+    .eq("fromGoogle", fromGoogle);
 
   if (error) {
     console.log(
@@ -25,21 +26,25 @@ exports.createOrUpdateFileDb = async ({
   }
 
   if (data?.length) {
-    const { data, error } = await supabaseClient
-      .from("files")
-      .update([
-        {
-          ...params,
-          name,
-          fromSiteData,
-          fromGoogle,
-          company,
-        },
-      ])
-      .eq("name", name)
-      .select("*,admin(email,slackToken)");
+    if (data[0].fromGoogle && data[0].folderId === params.folderId) {
+      return { data, error };
+    } else {
+      const { data, error } = await supabaseClient
+        .from("files")
+        .update([
+          {
+            ...params,
+            name,
+            fromSiteData,
+            fromGoogle,
+            company,
+          },
+        ])
+        .eq("name", name)
+        .select("*,admin(email,slackToken)");
 
-    return { data, error };
+      return { data, error };
+    }
   } else {
     const { data, error } = await supabaseClient
       .from("files")

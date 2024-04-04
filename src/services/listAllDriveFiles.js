@@ -2,7 +2,7 @@ const { google } = require("googleapis");
 
 const { GOOGLE_URL, GOOGLE_KEYS_PATH } = process.env;
 
-const { organizeFilesByFolders, googleDrive } = require("../utils/googleDrive");
+const { determineFolderOfFiles, googleDrive } = require("../utils/googleDrive");
 
 exports.listAllDriveFiles = async ({ email }) => {
   if (!email) {
@@ -44,7 +44,7 @@ exports.listAllDriveFiles = async ({ email }) => {
     const filesResponse = await drive.files.list(options);
     allFiles = allFiles.concat(filesResponse.data.files);
 
-    return organizeFilesByFolders(allFiles);
+    return determineFolderOfFiles(allFiles);
   } catch (error) {
     console.error("listAllDriveFiles: ", { error });
     return {

@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 require("dotenv").config();
+require("./schedule");
 
 const { SERVER_PORT } = process.env;
 

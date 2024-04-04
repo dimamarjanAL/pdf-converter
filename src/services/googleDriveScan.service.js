@@ -1,0 +1,87 @@
+const moment = require("moment");
+
+const { supabaseClient } = require("../utils/supabaseClient");
+const { listAllDriveFiles } = require("./listAllDriveFiles");
+const { createOrUpdateFileDb } = require("../utils/createOrUpdateFileDb");
+const { findOrCreateCategory } = require("../utils/findOrCreateCategoryDb");
+const { googleDocParser } = require("./googleDocParser");
+
+exports.googleDriveScan = async () => {
+  let { data: companies } = await supabaseClient
+    .from("companies")
+    .select("id,slackId,googleDriveEmail")
+    .neq("googleDriveEmail", "null");
+
+  console.log("companies", companies);
+
+  for (const company of companies) {
+    const driveFiles = await listAllDriveFiles({
+      email: company.googleDriveEmail,
+    });
+
+    const files = await Promise.all(
+      driveFiles.map(async (driveFile) => {
+        const { data: fileData, error } = await createOrUpdateFileDb({
+          userId: null,
+          fileURL: null,
+          category: null,
+          title: driveFile.name,
+          description: null,
+          name: driveFile.name,
+          date: moment().format("MM/DD/YYYY"),
+          expireDate: null,
+          admin: null,
+          company: company.id,
+          fromSiteData: false,
+          fromGoogle: true,
+          folderId: driveFile?.folder?.id,
+          folderName: driveFile?.folder?.name,
+          isPrivate: false,
+          inProcessing: !!driveFile?.folder?.id,
+        });
+        if (error) {
+          console.log(
+            "FILE CREATING ERROR",
+            "|",
+            moment().format("HH:mm:ss"),
+            "|",
+            error
+          );
+          return driveFile;
+        }
+        return { ...driveFile, companyId: company.id, fileData: fileData[0] };
+      })
+    );
+
+    for (const file of files) {
+      const { id, folderName, category } = file.fileData;
+
+      if (folderName && !category) {
+        const { category } = await findOrCreateCategory({
+          folderName,
+          company,
+        });
+
+        if (category) {
+          console.log("CATEGORY FOUND", "|", moment().format("HH:mm:ss"));
+          await supabaseClient
+            .from("files")
+            .update({
+              category,
+            })
+            .eq("id", id);
+
+          await googleDocParser([file]);
+        } else {
+          console.log("CATEGORY NOT FOUND", "|", moment().format("HH:mm:ss"));
+          await supabaseClient
+            .from("files")
+            .update({
+              warningMsg: `The ${folderName} channel wasn't found`,
+            })
+            .eq("id", id);
+        }
+      }
+    }
+  }
+};

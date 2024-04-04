@@ -2,15 +2,15 @@ const S3 = require("aws-sdk/clients/s3");
 
 const {
   AWS_STORAGE_BUCKET,
-  ACCESS_KEY,
-  SECRET_KEY,
+  AWS_ACCESS_KEY,
+  AWS_SECRET_KEY,
   AWS_PROJECT_REGION,
   APP_PROD_LINK,
 } = process.env;
 
 const s3 = new S3({
-  accessKeyId: ACCESS_KEY,
-  secretAccessKey: SECRET_KEY,
+  accessKeyId: AWS_ACCESS_KEY,
+  secretAccessKey: AWS_SECRET_KEY,
   region: AWS_PROJECT_REGION,
   signatureVersion: "v4",
 });

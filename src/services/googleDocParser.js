@@ -40,14 +40,7 @@ exports.googleDocParserCreateFile = async ({ docs }) => {
       }
 
       const file = fileData[0];
-      console.log("======", {
-        category: file.category,
-        expDate: file.expireDate,
-        admin: file.admin,
-        fileName: file.name,
-        fileUrl: file.fileURL,
-        fileId: file.id,
-      });
+
       const response = await setSchedulerMessage({
         category: file.category,
         expDate: file.expireDate,
@@ -126,7 +119,7 @@ exports.googleDocParser = async (createdFiles) => {
               createOpenAiEmbeddings({
                 fileId: fileData.id,
                 companyId: file.companyId,
-                userId: file.userId,
+                userId: file?.userId,
                 fileUrl: fileLink,
                 parsedPageText: pageData.extractedText,
                 fileName: fileData.name,

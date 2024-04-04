@@ -2,3 +2,6 @@
 /.idea
 .env
 docuseer-d572e9584240.json
+
+# macos
+**/.DS_Store
