@@ -99,7 +99,7 @@ exports.docParser = async ({ file, createdFile, ...params }) => {
               pageNumber: pageData.page,
             });
             resolve();
-          }, 100 * cycle);
+          }, 50 * cycle);
         });
       })
     );

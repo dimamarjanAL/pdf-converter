@@ -91,23 +91,8 @@ exports.googleDocParser = async (createdFiles) => {
         data: { fileURL: fileLink },
       });
 
-      console.log(
-        "GOOGLE DOC PARSER START",
-        "|",
-        moment().format("HH:mm:ss"),
-        "|",
-        file.name
-      );
       const pagesData = await textExtractor(emitFile);
       const numberOfPages = pagesData.length;
-
-      console.log(
-        "GOOGLE DOC PARSER",
-        "|",
-        moment().format("HH:mm:ss"),
-        "|",
-        `Found ${numberOfPages} pages`
-      );
 
       let cycle = 0;
 
@@ -126,7 +111,7 @@ exports.googleDocParser = async (createdFiles) => {
                 pageNumber: pageData.page,
               });
               resolve();
-            }, 100 * cycle);
+            }, 50 * cycle);
           });
         })
       );
@@ -146,11 +131,11 @@ exports.googleDocParser = async (createdFiles) => {
       });
 
       console.log(
-        "GOOGLE DOC PARSER FINISH",
+        "GOOGLE DOC PARSER",
         "|",
         moment().format("HH:mm:ss"),
         "|",
-        file.name
+        `${numberOfPages} pages, file: ${file.name}`
       );
     }
 

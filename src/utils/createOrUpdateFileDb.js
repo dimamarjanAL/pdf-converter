@@ -8,12 +8,13 @@ exports.createOrUpdateFileDb = async ({
   fromGoogle = false,
   ...params
 }) => {
-  const { data, error } = await supabaseClient
+  const { data: file, error } = await supabaseClient
     .from("files")
     .select()
     .eq("name", name)
     .eq("company", company)
-    .eq("fromGoogle", fromGoogle);
+    .eq("fromGoogle", fromGoogle)
+    .eq("folderId", params.folderId);
 
   if (error) {
     console.log(
@@ -25,9 +26,18 @@ exports.createOrUpdateFileDb = async ({
     );
   }
 
-  if (data?.length) {
-    if (data[0].fromGoogle && data[0].folderId === params.folderId) {
-      return { data, error };
+  if (file?.length) {
+    if (file[0].fromGoogle) {
+      if (file[0].inProcessing && file[0].warningMsg) {
+        await supabaseClient
+          .from("files")
+          .update({
+            warningMsg: null,
+          })
+          .eq("id", file[0].id);
+      }
+
+      return { data: file, error };
     } else {
       const { data, error } = await supabaseClient
         .from("files")
@@ -40,7 +50,7 @@ exports.createOrUpdateFileDb = async ({
             company,
           },
         ])
-        .eq("name", name)
+        .eq("id", file[0].id)
         .select("*,admin(email,slackToken)");
 
       return { data, error };
