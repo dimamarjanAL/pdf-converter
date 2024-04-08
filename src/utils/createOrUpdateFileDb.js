@@ -54,9 +54,9 @@ exports.createOrUpdateFileDb = async ({
 }) => {
   let file = await determineQueryType({ name, company, fromGoogle, folderId });
 
-  if (file) {
+  if (!!file) {
     if (file.fromGoogle) {
-      if (file.inProcessing && file.warningMsg) {
+      if (file.inProcessing && !!file.warningMsg) {
         await supabaseClient
           .from("files")
           .update({
@@ -65,7 +65,7 @@ exports.createOrUpdateFileDb = async ({
           .eq("id", file.id);
       }
 
-      return { data: file, error };
+      return { data: file };
     } else {
       await supabaseClient.from("documents").delete().eq("file", file.id);
 
@@ -84,7 +84,7 @@ exports.createOrUpdateFileDb = async ({
         .eq("id", file.id)
         .select("*,admin(email,slackToken)");
 
-      return { data, error };
+      return { data: data[0], error };
     }
   } else {
     const { data, error } = await supabaseClient
@@ -101,6 +101,6 @@ exports.createOrUpdateFileDb = async ({
       ])
       .select("*,admin(email,slackToken)");
 
-    return { data, error };
+    return { data: data[0], error };
   }
 };

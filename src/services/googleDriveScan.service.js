@@ -29,6 +29,9 @@ exports.googleDriveScan = async () => {
     const driveFiles = await listAllDriveFiles({
       email: company.googleDriveEmail,
     });
+    console.log(
+      `Account ${company.googleDriveEmail} includes ${driveFiles.length} files`
+    );
 
     await compareAndRemoveDriveFileDb({ driveFiles, companyId: company.id });
 
@@ -63,7 +66,7 @@ exports.googleDriveScan = async () => {
           return driveFile;
         }
 
-        return { ...driveFile, companyId: company.id, fileData: fileData[0] };
+        return { ...driveFile, companyId: company.id, fileData };
       })
     );
 
