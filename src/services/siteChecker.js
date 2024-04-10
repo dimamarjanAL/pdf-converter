@@ -1,10 +1,11 @@
 const moment = require("moment");
 const puppeteer = require("puppeteer");
 
+const { PRODUCTION } = require("../constants/general");
 const { googleAuth } = require("../utils/googleAuth");
 const { urlCleaner } = require("../utils/helpers");
 
-const { JE_CHROMIUM_PATH } = process.env;
+const { APP_ENV, JE_CHROMIUM_PATH } = process.env;
 
 exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
   if (!url) {
@@ -16,9 +17,10 @@ exports.siteChecker = async ({ url, siteLogin, sitePassword }) => {
     browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      ...(JE_CHROMIUM_PATH && {
-        executablePath: JE_CHROMIUM_PATH,
-      }),
+      ...(APP_ENV !== PRODUCTION &&
+        JE_CHROMIUM_PATH && {
+          executablePath: JE_CHROMIUM_PATH,
+        }),
     });
     const page = await browser.newPage();
 

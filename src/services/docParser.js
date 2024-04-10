@@ -41,15 +41,13 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
     return { isOk: false, error: error?.message || "something went wrong" };
   }
 
-  const createdFile = fileData[0];
-
   const response = await setSchedulerMessage({
-    category: createdFile.category,
-    expDate: createdFile.expireDate,
-    admin: createdFile.admin,
-    fileName: createdFile.name,
-    fileUrl: createdFile.fileURL,
-    fileId: createdFile.id,
+    category: fileData.category,
+    expDate: fileData.expireDate,
+    admin: fileData.admin,
+    fileName: fileData.name,
+    fileUrl: fileData.fileURL,
+    fileId: fileData.id,
   });
   console.log(
     "SET SCHEDULER",
@@ -59,7 +57,7 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
     response.message
   );
 
-  return { isOk: true, ...createdFile, reminderStatus: response.isSuccess };
+  return { isOk: true, ...fileData, reminderStatus: response.isSuccess };
 };
 
 exports.docParser = async ({ file, createdFile, ...params }) => {

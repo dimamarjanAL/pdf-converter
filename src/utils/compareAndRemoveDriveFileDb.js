@@ -1,10 +1,16 @@
 const moment = require("moment");
 const { supabaseClient } = require("./supabaseClient");
+const { removeFileFromS3 } = require("./storageS3");
+const { removeSlackReminder } = require("./slack");
 
-exports.compareAndRemoveDriveFileDb = async ({ driveFiles, companyId }) => {
+exports.compareAndRemoveDriveFileDb = async ({
+  driveFiles,
+  companyId,
+  slackToken,
+}) => {
   const { data: files, error } = await supabaseClient
     .from("files")
-    .select("id,name,company,fromGoogle,folderId")
+    .select("id,name,company,reminder,fromGoogle,folderId")
     .eq("company", companyId)
     .eq("fromGoogle", true);
 
@@ -28,19 +34,17 @@ exports.compareAndRemoveDriveFileDb = async ({ driveFiles, companyId }) => {
         );
 
         if (!isExistOnDrive) {
-          //NEED IMPROVE DELETE REMINDER ===>
+          if (file.reminder) {
+            const { channel, scheduled_message_id } = file.reminder;
 
-          // if (file.reminder) {
-          //   await fetch("/api/slack/reminder/delete", {
-          //     method: "POST",
-          //     body: JSON.stringify({
-          //       reminder: file.reminder,
-          //       slackToken,
-          //     }),
-          //   });
-          // }
+            await removeSlackReminder({
+              slackToken,
+              channel,
+              scheduled_message_id,
+            });
+          }
 
-          //NEED ADD REMOVE FILE FROM S3 ===>
+          await removeFileFromS3({ fileKey: `${file.company}-${file.name}` });
 
           await supabaseClient.from("files").delete().eq("id", file.id);
         }

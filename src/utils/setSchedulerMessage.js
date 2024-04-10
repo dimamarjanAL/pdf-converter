@@ -1,6 +1,6 @@
 const moment = require("moment");
 const { supabaseClient } = require("./supabaseClient");
-const { SLACK_USERS_LIST_API, SLACK_SCHEDULE_MESSAGE_API } = process.env;
+const { listSlackUsers, createSlackReminder } = require("./slack");
 
 const slackSchedulerMessageHandler = async ({
   admin,
@@ -11,14 +11,7 @@ const slackSchedulerMessageHandler = async ({
   fileId,
 }) => {
   try {
-    const usersResponse = await fetch(SLACK_USERS_LIST_API, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${admin.slackToken}`,
-      },
-    });
-    const users = await usersResponse.text();
+    const users = await listSlackUsers({ slackToken: admin.slackToken });
     const response = JSON.parse(users);
 
     const foundUser = response.members.find(
@@ -32,19 +25,15 @@ const slackSchedulerMessageHandler = async ({
       };
     }
 
-    const resp = await fetch(SLACK_SCHEDULE_MESSAGE_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Bearer ${admin.slackToken}`,
-      },
-      body: JSON.stringify({
-        channel,
-        post_at: expDate,
-        text: `Hey <@${foundUser.id}> - This is a reminder that <${fileUrl}|${fileName}> should be reviewed and updated, please use the following link to access the document  <https://app.accountingcopilot.ai/dashboard/upload-files?file=${fileId}|accounting-copilot dashboard>`,
-      }),
+    const respData = await createSlackReminder({
+      slackToken: admin.slackToken,
+      channel,
+      expDate,
+      foundUserId: foundUser.id,
+      fileUrl,
+      fileName,
+      fileId,
     });
-    const respData = await resp.json();
 
     if (respData.ok) {
       const date = moment(expDate * 1000).format("MM/DD/YYYY HH:mm");

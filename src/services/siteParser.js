@@ -1,6 +1,7 @@
 const puppeteer = require("puppeteer");
 const moment = require("moment");
 
+const { PRODUCTION } = require("../constants/general");
 const { createOrUpdateFileDb } = require("../utils/createOrUpdateFileDb");
 const { setSchedulerMessage } = require("../utils/setSchedulerMessage");
 const { googleAuth } = require("../utils/googleAuth");
@@ -9,7 +10,7 @@ const { updateRowById } = require("../utils/helpers");
 const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 const { urlCleaner } = require("../utils/helpers");
 
-const { JE_CHROMIUM_PATH } = process.env;
+const { APP_ENV, JE_CHROMIUM_PATH } = process.env;
 
 exports.siteParserCreateFile = async ({ sitesData, companyId, userId }) => {
   return Promise.all(
@@ -33,7 +34,7 @@ exports.siteParserCreateFile = async ({ sitesData, companyId, userId }) => {
 
       if (error) {
         console.log(
-          "FILE CREATING ERROR",
+          "SITE CREATING ERROR",
           "|",
           moment().format("HH:mm:ss"),
           "|",
@@ -42,15 +43,13 @@ exports.siteParserCreateFile = async ({ sitesData, companyId, userId }) => {
         return site;
       }
 
-      const file = fileData[0];
-
       const response = await setSchedulerMessage({
-        category: file.category,
-        expDate: file.expireDate,
-        admin: file.admin,
-        fileName: file.name,
-        fileUrl: file.fileURL,
-        fileId: file.id,
+        category: fileData.category,
+        expDate: fileData.expireDate,
+        admin: fileData.admin,
+        fileName: fileData.name,
+        fileUrl: fileData.fileURL,
+        fileId: fileData.id,
       });
       console.log(
         "SET SCHEDULER",
@@ -65,7 +64,7 @@ exports.siteParserCreateFile = async ({ sitesData, companyId, userId }) => {
           ...site,
           companyId,
           userId,
-          fileId: file.id,
+          fileId: fileData.id,
           reminderStatus: response.isSuccess,
         };
       }
@@ -74,8 +73,8 @@ exports.siteParserCreateFile = async ({ sitesData, companyId, userId }) => {
         ...site,
         companyId,
         userId,
-        fileId: file.id,
-        fileData: file,
+        fileId: fileData.id,
+        fileData,
         reminderStatus: response.isSuccess,
       };
     })
@@ -140,9 +139,10 @@ exports.siteParser = async (sites) => {
       browser = await puppeteer.launch({
         headless: "new",
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        ...(JE_CHROMIUM_PATH && {
-          executablePath: JE_CHROMIUM_PATH,
-        }),
+        ...(APP_ENV !== PRODUCTION &&
+          JE_CHROMIUM_PATH && {
+            executablePath: JE_CHROMIUM_PATH,
+          }),
       });
       const page = await browser.newPage();
 

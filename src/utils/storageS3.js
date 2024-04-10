@@ -29,3 +29,12 @@ exports.uploadFileToS3 = async ({ file, fileKey }) => {
 
   return `${APP_PROD_LINK}/download/${encodeURIComponent(fileKey)}`;
 };
+
+exports.removeFileFromS3 = async ({ fileKey }) => {
+  const s3Params = {
+    Bucket: `${AWS_STORAGE_BUCKET}/public`,
+    Key: fileKey,
+  };
+
+  s3.deleteObject(s3Params, (_err, _data) => {});
+};

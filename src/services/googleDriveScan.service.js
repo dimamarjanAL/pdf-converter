@@ -12,7 +12,7 @@ const { googleDocParser } = require("./googleDocParser");
 exports.googleDriveScan = async () => {
   let { data: companies } = await supabaseClient
     .from("companies")
-    .select("id,slackId,googleDriveEmail")
+    .select("id,slackId,slackToken,googleDriveEmail")
     .neq("googleDriveEmail", "null");
 
   for (const company of companies) {
@@ -30,10 +30,14 @@ exports.googleDriveScan = async () => {
       email: company.googleDriveEmail,
     });
     console.log(
-      `Account ${company.googleDriveEmail} includes ${driveFiles.length} files`
+      `Account ${company.googleDriveEmail} includes <<<––${driveFiles.length}––>>> files`
     );
 
-    await compareAndRemoveDriveFileDb({ driveFiles, companyId: company.id });
+    await compareAndRemoveDriveFileDb({
+      driveFiles,
+      companyId: company.id,
+      slackToken: company.slackToken,
+    });
 
     const files = await Promise.all(
       driveFiles.map(async (driveFile) => {
@@ -82,13 +86,6 @@ exports.googleDriveScan = async () => {
           });
 
           if (category) {
-            await supabaseClient
-              .from("files")
-              .update({
-                category,
-              })
-              .eq("id", id);
-
             await new Promise((resolve, _reject) => {
               setTimeout(() => {
                 resolve(googleDocParser([file]));
@@ -96,6 +93,13 @@ exports.googleDriveScan = async () => {
 
               itr += 1;
             });
+
+            await supabaseClient
+              .from("files")
+              .update({
+                category,
+              })
+              .eq("id", id);
           } else {
             await supabaseClient
               .from("files")

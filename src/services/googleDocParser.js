@@ -116,14 +116,6 @@ exports.googleDocParser = async (createdFiles) => {
         })
       );
 
-      console.log(
-        "GOOGLE DOC PARSER",
-        "|",
-        moment().format("HH:mm:ss"),
-        "|",
-        `Handled ${numberOfPages} pages`
-      );
-
       await updateRowById({
         tableName: "files",
         rowId: fileData.id,
@@ -135,7 +127,7 @@ exports.googleDocParser = async (createdFiles) => {
         "|",
         moment().format("HH:mm:ss"),
         "|",
-        `${numberOfPages} pages, file: ${file.name}`
+        `Handled ${numberOfPages} pages, file: ${file.name}`
       );
     }
 

@@ -1,8 +1,9 @@
 const puppeteer = require("puppeteer");
 
+const { PRODUCTION } = require("../constants/general");
 const { getWholePageText } = require("../utils/helpers");
 
-const { JE_CHROMIUM_PATH } = process.env;
+const { APP_ENV, JE_CHROMIUM_PATH } = process.env;
 
 exports.pageParser = async ({ url }) => {
   if (!url) {
@@ -13,9 +14,10 @@ exports.pageParser = async ({ url }) => {
   try {
     browser = await puppeteer.launch({
       headless: "new",
-      ...(JE_CHROMIUM_PATH && {
-        executablePath: JE_CHROMIUM_PATH,
-      }),
+      ...(APP_ENV !== PRODUCTION &&
+        JE_CHROMIUM_PATH && {
+          executablePath: JE_CHROMIUM_PATH,
+        }),
     });
     const page = await browser.newPage();
     await page.setUserAgent(
