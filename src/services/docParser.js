@@ -11,7 +11,6 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
   const fileKey = `${params.companyId}-${file.originalname}`;
 
   const fileLink = await uploadFileToS3({ file, fileKey });
-  console.log("FILE UPLOADED", "|", moment().format("HH:mm:ss"), "|", fileLink);
 
   const { data: fileData, error } = await createOrUpdateFileDb({
     userId: params.userId,
@@ -62,18 +61,11 @@ exports.docParserCreateFile = async ({ file, ...params }) => {
 
 exports.docParser = async ({ file, createdFile, ...params }) => {
   try {
-    console.log(
-      "DOC PARSER START",
-      "|",
-      moment().format("HH:mm:ss"),
-      "|",
-      createdFile.name
-    );
     const pagesData = await textExtractor(file);
     const numberOfPages = pagesData.length;
 
     console.log(
-      "DOC PARSER",
+      "DOC PARSER START",
       "|",
       moment().format("HH:mm:ss"),
       "|",
@@ -102,14 +94,6 @@ exports.docParser = async ({ file, createdFile, ...params }) => {
       })
     );
 
-    console.log(
-      "DOC PARSER",
-      "|",
-      moment().format("HH:mm:ss"),
-      "|",
-      `Handled ${numberOfPages} pages`
-    );
-
     await updateRowById({
       tableName: "files",
       rowId: createdFile.id,
@@ -121,7 +105,7 @@ exports.docParser = async ({ file, createdFile, ...params }) => {
       "|",
       moment().format("HH:mm:ss"),
       "|",
-      createdFile.name
+      `Handled ${numberOfPages} pages, file: ${createdFile.name}`
     );
 
     return { isOk: true };

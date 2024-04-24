@@ -77,13 +77,6 @@ exports.googleDocParser = async (createdFiles) => {
       const fileKey = `${file.companyId}-${file.name}`;
 
       const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
-      console.log(
-        "FILE UPLOADED",
-        "|",
-        moment().format("HH:mm:ss"),
-        "|",
-        fileLink
-      );
 
       await updateRowById({
         tableName: "files",
@@ -94,10 +87,18 @@ exports.googleDocParser = async (createdFiles) => {
       const pagesData = await textExtractor(emitFile);
       const numberOfPages = pagesData.length;
 
+      console.log(
+        "GOOGLE DOC PARSER START",
+        "|",
+        moment().format("HH:mm:ss"),
+        "|",
+        `Found ${numberOfPages} pages`
+      );
+
       let cycle = 0;
 
       await Promise.all(
-        pagesData.map(async (pageData, idx) => {
+        pagesData.map(async (pageData) => {
           cycle += 1;
           await new Promise((resolve, _reject) => {
             setTimeout(() => {
@@ -123,7 +124,7 @@ exports.googleDocParser = async (createdFiles) => {
       });
 
       console.log(
-        "GOOGLE DOC PARSER",
+        "GOOGLE DOC PARSER FINISH",
         "|",
         moment().format("HH:mm:ss"),
         "|",

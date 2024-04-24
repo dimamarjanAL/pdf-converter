@@ -31,18 +31,35 @@ exports.listAllDriveFiles = async ({ email }) => {
     const drives = driveResponse.data.drives || [];
 
     let allFiles = [];
-    for (const d of drives) {
-      const response = await drive.files.list({
-        driveId: d.id,
-        corpora: "drive",
-        ...options,
-      });
 
-      allFiles = allFiles.concat(response.data.files);
+    for (const d of drives) {
+      let nextPageToken = "";
+      do {
+        const response = await drive.files.list({
+          driveId: d.id,
+          corpora: "drive",
+          ...options,
+        });
+
+        allFiles = allFiles.concat(response.data.files);
+
+        nextPageToken = response.data.nextPageToken;
+      } while (nextPageToken);
     }
 
-    const filesResponse = await drive.files.list(options);
-    allFiles = allFiles.concat(filesResponse.data.files);
+    let nextPageToken = "";
+    do {
+      const filesResponse = await drive.files.list({
+        ...options,
+        ...(nextPageToken && {
+          pageToken: nextPageToken,
+        }),
+      });
+
+      allFiles = allFiles.concat(filesResponse.data.files);
+
+      nextPageToken = filesResponse.data.nextPageToken;
+    } while (nextPageToken);
 
     return determineFolderOfFiles(allFiles);
   } catch (error) {
