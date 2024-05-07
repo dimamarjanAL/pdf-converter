@@ -44,7 +44,9 @@ exports.compareAndRemoveDriveFileDb = async ({
             });
           }
 
-          await removeFileFromS3({ fileKey: `${file.company}-${file.name}` });
+          await removeFileFromS3({
+            fileKey: `${file.company}-drive-${file.name}`,
+          });
 
           await supabaseClient.from("files").delete().eq("id", file.id);
         }

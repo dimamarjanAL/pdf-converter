@@ -8,8 +8,7 @@ const { createOpenAiEmbeddings } = require("../utils/createOpenAiEmbeddings");
 const { updateRowById } = require("../utils/helpers");
 
 exports.docParserCreateFile = async ({ file, ...params }) => {
-  const fileKey = `${params.companyId}-${file.originalname}`;
-
+  const fileKey = `${params.companyId}-file-${file.originalname}`;
   const fileLink = await uploadFileToS3({ file, fileKey });
 
   const { data: fileData, error } = await createOrUpdateFileDb({

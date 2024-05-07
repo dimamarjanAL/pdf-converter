@@ -74,8 +74,7 @@ exports.googleDocParser = async (createdFiles) => {
         name: file.name,
       };
 
-      const fileKey = `${file.companyId}-${file.name}`;
-
+      const fileKey = `${file.companyId}-drive-${file.name}`;
       const fileLink = await uploadFileToS3({ file: emitFile, fileKey });
 
       await updateRowById({
