@@ -74,40 +74,50 @@ exports.googleDriveScan = async () => {
       })
     );
 
+    const filesWithCategory = [];
+    for (const file of files) {
+      const { folderName, category } = file.fileData;
+
+      if (folderName && !category) {
+        const { category } = await findOrCreateCategory({
+          folderName,
+          company,
+        });
+
+        filesWithCategory.push({
+          ...file,
+          fileData: { ...file.fileData, category },
+        });
+      }
+    }
+
     let itr = 0;
     await Promise.all(
-      files.map(async (file) => {
+      filesWithCategory.map(async (file) => {
         const { id, folderName, category } = file.fileData;
 
-        if (folderName && !category) {
-          const { category } = await findOrCreateCategory({
-            folderName,
-            company,
+        if (category) {
+          await new Promise((resolve, _reject) => {
+            setTimeout(() => {
+              resolve(googleDocParser([file]));
+            }, 3000 * itr);
+
+            itr += 1;
           });
 
-          if (category) {
-            await new Promise((resolve, _reject) => {
-              setTimeout(() => {
-                resolve(googleDocParser([file]));
-              }, 3000 * itr);
-
-              itr += 1;
-            });
-
-            await supabaseClient
-              .from("files")
-              .update({
-                category,
-              })
-              .eq("id", id);
-          } else {
-            await supabaseClient
-              .from("files")
-              .update({
-                warningMsg: `The ${folderName} channel wasn't found`,
-              })
-              .eq("id", id);
-          }
+          await supabaseClient
+            .from("files")
+            .update({
+              category,
+            })
+            .eq("id", id);
+        } else {
+          await supabaseClient
+            .from("files")
+            .update({
+              warningMsg: `The ${folderName} channel wasn't found`,
+            })
+            .eq("id", id);
         }
       })
     );
