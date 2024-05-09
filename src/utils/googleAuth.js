@@ -15,7 +15,24 @@ exports.googleAuth = async ({ page, url, siteLogin, sitePassword }) => {
   await page.type('input[type="password"]', sitePassword);
   await page.click("#passwordNext");
   await page.waitForNavigation({ timeout: 0 });
-  const currentUrl = await page.url();
+
+  const status = await page.evaluate(() => {
+    return {
+      status: document
+        ? document.querySelector('meta[property="og:url"]')
+        : null,
+    };
+  });
+
+  let currentUrl = "";
+
+  if (status && status.status) {
+    console.log("PAGE IS AVAILABLE", "|", moment().format("HH:mm:ss"));
+    currentUrl = await page.url();
+  } else {
+    console.log("PAGE NOT FOUND", "|", moment().format("HH:mm:ss"));
+    currentUrl = "error404";
+  }
 
   console.log(
     "SITE AUTH RESULT",
