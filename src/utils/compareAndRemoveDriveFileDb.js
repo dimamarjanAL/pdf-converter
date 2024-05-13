@@ -10,7 +10,7 @@ exports.compareAndRemoveDriveFileDb = async ({
 }) => {
   const { data: files, error } = await supabaseClient
     .from("files")
-    .select("id,name,company,reminder,fromGoogle,folderId")
+    .select("id,name,company,reminder,fromGoogle,folderId,md5Checksum")
     .eq("company", companyId)
     .eq("fromGoogle", true);
 
@@ -27,13 +27,13 @@ exports.compareAndRemoveDriveFileDb = async ({
   if (files?.length) {
     await Promise.all(
       files.map(async (file) => {
-        const isExistOnDrive = driveFiles.some(
+        const driveFile = driveFiles.find(
           (driveFile) =>
             driveFile.name === file.name &&
             driveFile.folder.id === file.folderId
         );
 
-        if (!isExistOnDrive) {
+        if (!driveFile || file.md5Checksum !== driveFile?.md5Checksum) {
           if (file.reminder) {
             const { channel, scheduled_message_id } = file.reminder;
 

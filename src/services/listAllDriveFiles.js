@@ -13,7 +13,7 @@ exports.listAllDriveFiles = async ({ email }) => {
   }
 
   const options = {
-    fields: "nextPageToken, files(id, name, mimeType, parents)",
+    fields: "nextPageToken, files(id, name, mimeType, parents, md5Checksum)",
     includeItemsFromAllDrives: true,
     supportsAllDrives: true,
     q: `'${email}' in readers`,

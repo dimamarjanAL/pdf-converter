@@ -58,6 +58,7 @@ exports.googleDriveScan = async () => {
           folderName: driveFile?.folder?.name,
           isPrivate: false,
           inProcessing: !!driveFile?.folder?.id,
+          md5Checksum: driveFile.md5Checksum,
         });
         if (error) {
           console.log(

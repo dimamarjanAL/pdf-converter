@@ -50,6 +50,7 @@ exports.createOrUpdateFileDb = async ({
   fromSiteData = false,
   fromGoogle = false,
   folderId = null,
+  md5Checksum = null,
   ...params
 }) => {
   let file = await determineQueryType({ name, company, fromGoogle, folderId });
@@ -65,6 +66,14 @@ exports.createOrUpdateFileDb = async ({
           .eq("id", file.id);
       }
 
+      if (!file.md5Checksum) {
+        await supabaseClient
+          .from("files")
+          .update({
+            md5Checksum,
+          })
+          .eq("id", file.id);
+      }
       return { data: file };
     } else {
       await supabaseClient.from("documents").delete().eq("file", file.id);
@@ -97,6 +106,7 @@ exports.createOrUpdateFileDb = async ({
           fromGoogle,
           folderId,
           company,
+          md5Checksum,
         },
       ])
       .select("*,admin(email,slackToken)");
